@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Creador de QR — URL rápida</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#0f172a}
+    body{background:linear-gradient(#cfefff,#bfe9ff);min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:24px}
+    .wrap{background:rgba(255,255,255,0.9);border-radius:12px;padding:20px;display:flex;gap:18px;align-items:center;box-shadow:0 8px 30px rgba(2,6,23,0.08);max-width:900px;width:100%}
+    .left{flex:1;min-width:260px}
+    .right{width:320px;display:flex;flex-direction:column;align-items:center}
+    h1{margin:0 0 8px;font-size:1.2rem}
+    label{font-size:0.9rem;color:#075985}
+    input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid #c5e4ff;font-size:1rem}
+    .btn{margin-top:10px;padding:8px 12px;border-radius:8px;border:0;background:#0369a1;color:white;cursor:pointer}
+    #qrcode{background:white;border:6px solid #e6f7ff;border-radius:6px;padding:12px}
+    @media (max-width:700px){.wrap{flex-direction:column}.right{width:100%}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="left">
+      <h1>Pon la URL</h1>
+      <label for="url">Introduce la URL que quieres convertir en QR</label>
+      <input id="url" type="text">
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="gen" class="btn">Generar QR</button>
+      </div>
+    </div>
+
+    <div class="right">
+      <div id="qrcode"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    const urlInput = document.getElementById('url');
+    const genBtn = document.getElementById('gen');
+    const qrContainer = document.getElementById('qrcode');
+
+    let qr;
+
+    function generate(){
+      qrContainer.innerHTML = ""; // limpiar
+      const v = urlInput.value || '';
+      if(v){
+        qr = new QRCode(qrContainer, {
+          text: v,
+          width: 280,
+          height: 280,
+          colorDark : "#000000",
+          colorLight : "#ffffff",
+          correctLevel : QRCode.CorrectLevel.H
+        });
+      }
+    }
+
+    genBtn.addEventListener('click', ()=>{ generate(); });
+  </script>
+</body>
+</html>
