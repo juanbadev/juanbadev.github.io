@@ -1,70 +1,825 @@
-<html lang="es"><head>
-    <meta charset="UTF-8">
-    <title>Creador de códigos QR</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
-            text-align: center;
-            margin-top: 40px;
-        }
-        h1 {
-            color: #2d6cdf;
-            margin-bottom: 30px;
-        }
-        #texto {
-            padding: 10px;
-            border: 1px solid #b0c4de;
-            border-radius: 6px;
-            font-size: 1.1em;
-            width: 300px;
-            box-shadow: 0 2px 6px rgba(44, 62, 80, 0.07);
-        }
-        button {
-            padding: 10px 22px;
-            background: #2d6cdf;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 1.1em;
-            cursor: pointer;
-            margin-left: 10px;
-            box-shadow: 0 2px 6px rgba(44, 62, 80, 0.07);
-            transition: background 0.2s;
-        }
-        button:hover {
-            background: #1b4fa0;
-        }
-        #qrcode {
-            margin-top: 30px;
-            display: inline-block;
-            padding: 20px;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(44, 62, 80, 0.13);
-        }
-    </style>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚡ NEON BLITZ</title>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none}
+:root{--g:#00ff88;--c:#00e5ff;--r:#ff1744;--y:#ffea00;--p:#e040fb;--dk:#020815;--panel:rgba(2,14,40,0.98);--bdr:rgba(0,229,255,0.28)}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dk);color:var(--g);font-family:'Share Tech Mono',monospace;user-select:none;-webkit-user-select:none}
+
+/* LOGIN */
+#ls{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:50;background:var(--dk)}
+.box{background:var(--panel);border:1px solid var(--bdr);padding:36px 38px;max-width:420px;width:92%;border-radius:4px;box-shadow:0 0 50px rgba(0,229,255,.12);text-align:center}
+.logo{font-family:'Orbitron',sans-serif;font-size:clamp(26px,7vw,40px);font-weight:900;color:var(--c);text-shadow:0 0 24px var(--c);letter-spacing:4px}
+.tagline{color:rgba(0,229,255,.45);font-size:11px;letter-spacing:4px;margin-bottom:28px}
+input{display:block;width:100%;background:rgba(0,0,0,.55);border:1px solid var(--bdr);color:var(--g);font-family:'Share Tech Mono',monospace;font-size:15px;padding:12px 16px;border-radius:2px;outline:none;letter-spacing:2px;margin-bottom:10px;text-transform:uppercase;-webkit-appearance:none}
+input:focus{border-color:var(--c);box-shadow:0 0 14px rgba(0,229,255,.18)}
+.btn-main{background:rgba(0,229,255,.07);border:1px solid var(--c);color:var(--c);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;padding:14px;cursor:pointer;text-transform:uppercase;border-radius:2px;width:100%;margin-top:6px;-webkit-appearance:none}
+.btn-main:active{background:rgba(0,229,255,.25)}
+.hint{font-size:10px;color:rgba(0,229,255,.45);margin-top:10px;letter-spacing:1px;line-height:1.7}
+.admhint{color:var(--y);font-size:10px;margin-top:5px}
+
+/* GAME */
+#gs{position:fixed;inset:0;display:none}
+canvas{position:absolute;inset:0;display:block}
+
+/* HUD */
+.hud{position:absolute;inset:0;pointer-events:none;z-index:5}
+#ri{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(0,229,255,.6);letter-spacing:2px;border:1px solid var(--bdr);padding:4px 12px;background:rgba(0,0,0,.55);white-space:nowrap}
+#myk{position:absolute;top:38px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--g);letter-spacing:2px}
+#status-bar{position:absolute;top:60px;left:50%;transform:translateX(-50%);display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+.sbadge{font-size:9px;padding:2px 8px;border-radius:2px;letter-spacing:1px;border:1px solid;animation:bp 1.5s infinite alternate}
+@keyframes bp{from{opacity:.6}to{opacity:1}}
+.bg-god{color:var(--y);border-color:var(--y)}
+.bg-auto{color:var(--r);border-color:var(--r)}
+.bg-speed{color:var(--g);border-color:var(--g)}
+.bg-invis{color:var(--p);border-color:var(--p)}
+.bg-frz{color:var(--c);border-color:var(--c)}
+.bg-chaos{color:#ff9100;border-color:#ff9100}
+.bg-bounce{color:#69f0ae;border-color:#69f0ae}
+#hw{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px}
+#hbg{width:155px;height:11px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.18);border-radius:2px;overflow:hidden}
+#hb{height:100%;width:100%;transition:width .2s,background .3s}
+#ht{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:#fff;min-width:26px}
+#kf{position:absolute;top:60px;right:12px;text-align:right;max-width:190px}
+.km{font-size:10px;color:rgba(255,255,255,.85);background:rgba(0,0,0,.55);padding:3px 8px;margin-bottom:3px;border-left:2px solid var(--r);animation:kfa 4s ease forwards}
+@keyframes kfa{0%,70%{opacity:1}100%{opacity:0}}
+#sb{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.82);pointer-events:none}
+.sbbox{background:var(--panel);border:1px solid var(--bdr);padding:22px 26px;min-width:300px;max-width:95vw}
+.sbbox h3{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--c);margin-bottom:14px;text-align:center;letter-spacing:3px}
+.sbbox table{width:100%;border-collapse:collapse;font-size:11px}
+.sbbox th{color:rgba(0,229,255,.55);text-align:left;padding:5px 7px;border-bottom:1px solid var(--bdr)}
+.sbbox td{padding:5px 7px;border-bottom:1px solid rgba(255,255,255,.04)}
+#dead{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:rgba(0,0,0,.62);z-index:6;pointer-events:none}
+.dtitle{font-family:'Orbitron',sans-serif;font-size:clamp(34px,10vw,52px);font-weight:900;color:var(--r);text-shadow:0 0 28px var(--r);animation:pp 1s infinite alternate}
+@keyframes pp{from{opacity:.6}to{opacity:1}}
+.dsub{font-size:13px;color:rgba(255,255,255,.65)}
+#frz-bar{position:absolute;top:0;left:0;right:0;background:rgba(0,40,130,.75);color:var(--c);font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;padding:6px;text-align:center;border-bottom:1px solid var(--c);display:none;pointer-events:none;z-index:7}
+#chaos-bar{position:absolute;top:0;left:0;right:0;background:rgba(200,60,0,.25);color:#ff9100;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;padding:6px;text-align:center;border-bottom:1px solid #ff9100;display:none;pointer-events:none;z-index:7;animation:cP .6s infinite alternate}
+@keyframes cP{from{background:rgba(200,60,0,.18)}to{background:rgba(200,60,0,.38)}}
+.ann{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.94);border:1px solid var(--y);color:var(--y);font-family:'Orbitron',sans-serif;font-size:clamp(12px,4vw,17px);padding:18px 30px;z-index:999;letter-spacing:2px;text-align:center;animation:anf 5s ease forwards;max-width:90vw}
+@keyframes anf{0%{opacity:0;transform:translate(-50%,-62%)}10%,75%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0}}
+#ctrl{position:absolute;bottom:12px;right:12px;font-size:9px;color:rgba(0,229,255,.28);text-align:right;letter-spacing:1px;pointer-events:none}
+
+/* ADMIN */
+#admbtn{position:absolute;top:8px;left:10px;background:rgba(255,234,0,.07);border:1px solid var(--y);color:var(--y);font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;padding:5px 10px;cursor:pointer;display:none;z-index:21;pointer-events:all}
+#admbtn:active{background:rgba(255,234,0,.3)}
+#adm{position:absolute;top:40px;left:8px;width:min(315px,96vw);background:var(--panel);border:1px solid rgba(255,234,0,.38);z-index:20;max-height:calc(100vh - 55px);overflow-y:auto;display:none;box-shadow:0 0 30px rgba(255,234,0,.08)}
+#adm::-webkit-scrollbar{width:3px}
+#adm::-webkit-scrollbar-thumb{background:rgba(255,234,0,.3)}
+.adm-sec{padding:10px 12px}
+.adm-sec+.adm-sec{border-top:1px solid rgba(255,234,0,.12)}
+.adm-ttl{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--y);letter-spacing:3px;margin-bottom:9px}
+.pcard{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.06);border-radius:2px;padding:8px 9px;margin-bottom:7px}
+.pcard-head{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.pcard-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.pcard-stats{font-size:9px;color:rgba(255,255,255,.4);display:flex;gap:8px}
+.pcard-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.pb{background:transparent;border:1px solid currentColor;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.5px;padding:5px 2px;cursor:pointer;text-align:center;border-radius:1px;line-height:1.2;transition:.12s}
+.pb:active{opacity:.4}
+.pb.on{box-shadow:0 0 8px currentColor}
+.pb.off{opacity:.38}
+.pc{color:var(--c)}.pr{color:var(--r)}.pg{color:var(--g)}.py{color:var(--y)}.pp{color:var(--p)}.po{color:#ff9100}
+.glob-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.gb{background:transparent;border:1px solid currentColor;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.5px;padding:7px 4px;cursor:pointer;text-align:center;border-radius:1px;transition:.12s}
+.gb:active{opacity:.4}
+.gb.on{box-shadow:0 0 10px currentColor;opacity:1}
+.gb.off{opacity:.45}
+.slabel{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-top:7px;margin-bottom:3px}
+.srow{display:flex;gap:4px}
+.sopt{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.45);font-family:'Share Tech Mono',monospace;font-size:9px;padding:5px;cursor:pointer;text-align:center;border-radius:1px;transition:.15s}
+.sopt.sel{background:rgba(0,229,255,.1);border-color:var(--c);color:var(--c)}
+.sopt:active{opacity:.5}
+
+/* MOBILE */
+#mob{position:absolute;inset:0;pointer-events:none;z-index:10;display:none}
+#joy-zone{position:absolute;bottom:85px;left:16px;width:120px;height:120px;pointer-events:all}
+#joy-base{position:absolute;inset:0;border-radius:50%;background:rgba(0,229,255,.06);border:2px solid rgba(0,229,255,.22)}
+#joy-knob{position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(0,229,255,.2);border:2px solid var(--c);left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 12px rgba(0,229,255,.25)}
+#fire-btn{position:absolute;bottom:85px;right:16px;width:84px;height:84px;border-radius:50%;background:rgba(255,23,68,.12);border:3px solid var(--r);color:var(--r);font-family:'Orbitron',sans-serif;font-size:10px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;pointer-events:all;cursor:pointer;box-shadow:0 0 16px rgba(255,23,68,.18)}
+#fire-btn:active{background:rgba(255,23,68,.4)}
+#sb-btn{position:absolute;bottom:85px;left:50%;transform:translateX(-50%);background:rgba(0,229,255,.06);border:1px solid var(--bdr);color:rgba(0,229,255,.55);font-family:'Share Tech Mono',monospace;font-size:9px;padding:6px 12px;pointer-events:all;cursor:pointer}
+</style>
 </head>
 <body>
-    <h1>Creador de códigos QR</h1>
-    <input type="text" id="texto" placeholder="Escribe el texto o enlace aquí" size="40">
-    <button onclick="generarQR()">Generar QR</button>
-    <div id="qrcode" title="https://www.youtube.com/"></div>
-    <script>
-        function generarQR() {
-            var texto = document.getElementById('texto').value;
-            var qrDiv = document.getElementById('qrcode');
-            qrDiv.innerHTML = "";
-            if(texto.trim() !== "") {
-                new QRCode(qrDiv, {
-                    text: texto,
-                    width: 200,
-                    height: 200
-                });
-            }
-        }
-    </script>
 
+<div id="ls">
+  <div class="box">
+    <div class="logo">⚡ NEON BLITZ</div>
+    <div class="tagline">MULTIPLAYER · PC &amp; MOBILE</div>
+    <input id="uinp" placeholder="TU NOMBRE" maxlength="14" autocomplete="off" autocorrect="off" spellcheck="false">
+    <input id="rinp" placeholder="NOMBRE DE SALA" maxlength="18" autocomplete="off" autocorrect="off" spellcheck="false" value="sala1">
+    <button class="btn-main" onclick="join()">► ENTRAR AL JUEGO</button>
+    <p class="admhint">⚡ Nombre "admin" → poderes de administrador</p>
+    <p class="hint">Mismo nombre de sala para jugar juntos · Sin registro</p>
+  </div>
+</div>
 
-</body></html>
+<div id="gs">
+  <canvas id="cv"></canvas>
+  <div id="frz-bar">❄️ JUEGO PAUSADO ❄️</div>
+  <div id="chaos-bar">🔥 MODO CAOS ACTIVO 🔥</div>
+
+  <div class="hud">
+    <div id="ri">SALA: <span id="rn">—</span></div>
+    <div id="myk">⚔️ 0 kills</div>
+    <div id="status-bar"></div>
+    <div id="hw"><div id="hbg"><div id="hb"></div></div><span id="ht">100</span></div>
+    <div id="kf"></div>
+    <div id="sb"><div class="sbbox">
+      <h3>🏆 SCOREBOARD</h3>
+      <table><thead><tr><th>Jugador</th><th>K</th><th>M</th><th>HP</th><th>Estado</th></tr></thead>
+      <tbody id="sbb"></tbody></table>
+    </div></div>
+    <div id="dead"><div class="dtitle">ELIMINADO</div><div class="dsub" id="dsub">Reapareciendo…</div></div>
+    <div id="ctrl">WASD · Click disparar · TAB tabla · P admin</div>
+  </div>
+
+  <button id="admbtn" onclick="togAdm()">⚡ ADMIN</button>
+
+  <div id="adm">
+    <!-- Players -->
+    <div class="adm-sec">
+      <div class="adm-ttl">👥 JUGADORES</div>
+      <div id="apl"><div style="font-size:10px;color:rgba(255,255,255,.3);padding:6px 0">Esperando jugadores…</div></div>
+    </div>
+    <!-- Global -->
+    <div class="adm-sec">
+      <div class="adm-ttl">🌐 PODERES GLOBALES</div>
+      <div class="glob-grid">
+        <button class="gb py off" id="gFrz"    onclick="doFrz()">❄️ Congelar</button>
+        <button class="gb po off" id="gChaos"  onclick="doChaos()">🔥 Modo Caos</button>
+        <button class="gb py off" id="gGodAll" onclick="doGodAll()">🛡 God Todos</button>
+        <button class="gb pc off" id="gBounce" onclick="doBounce()">🔵 Rebotar</button>
+        <button class="gb pr off" onclick="doKillAll()">💀 Matar Todos</button>
+        <button class="gb pg off" onclick="doRespAll()">♻️ Resp. Todos</button>
+        <button class="gb pc off" onclick="doTeleAll()">📍 Tele a mí</button>
+        <button class="gb pc off" onclick="doClear()">🧹 Limpiar balas</button>
+        <button class="gb py off" onclick="doAnn()" style="grid-column:span 2">📢 Anuncio</button>
+      </div>
+      <div class="slabel">⚡ VELOCIDAD GLOBAL</div>
+      <div class="srow" id="spdRow">
+        <button class="sopt" onclick="setSpd(0.4)">x0.4</button>
+        <button class="sopt sel" onclick="setSpd(1)">x1</button>
+        <button class="sopt" onclick="setSpd(1.8)">x1.8</button>
+        <button class="sopt" onclick="setSpd(3)">x3</button>
+        <button class="sopt" onclick="setSpd(5)">x5</button>
+      </div>
+      <div class="slabel">💥 DAÑO DE BALAS</div>
+      <div class="srow" id="dmgRow">
+        <button class="sopt" onclick="setDmg(5)">5hp</button>
+        <button class="sopt sel" onclick="setDmg(25)">25hp</button>
+        <button class="sopt" onclick="setDmg(50)">50hp</button>
+        <button class="sopt" onclick="setDmg(100)">1-shot</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mob">
+    <div id="joy-zone"><div id="joy-base"></div><div id="joy-knob"></div></div>
+    <button id="fire-btn" ontouchstart="mobileFire(event)">🔴<br>FUEGO</button>
+    <button id="sb-btn" ontouchstart="showSB(true)" ontouchend="showSB(false)">📊</button>
+  </div>
+</div>
+
+<script>
+// ═══ GUN ═══
+const gun = Gun(['https://gun-manhattan.herokuapp.com/gun','https://gun-us.herokuapp.com/gun']);
+
+// ═══ CONSTANTS ═══
+const AW=1800, AH=1100, PR=16, BR=5, BRANGE=700, RESPAWN=3, BASE_CD=230;
+const COLS=['#00ff88','#00e5ff','#ff6b35','#e040fb','#ffea00','#64ffda','#ff80ab','#b2ff59','#40c4ff','#f48fb1'];
+const WALLS=[
+  {x:160,y:120,w:170,h:65},{x:740,y:75,w:65,h:195},{x:1375,y:120,w:170,h:65},
+  {x:240,y:420,w:65,h:195},{x:800,y:370,w:230,h:65},{x:1195,y:470,w:65,h:165},
+  {x:160,y:710,w:170,h:65},{x:1375,y:710,w:170,h:65},{x:710,y:695,w:65,h:225},
+  {x:490,y:195,w:65,h:115},{x:1140,y:215,w:65,h:115},{x:940,y:520,w:130,h:65},
+];
+
+// ═══ STATE ═══
+let myId='', myName='', myRoom='', isAdmin=false;
+let myX=400, myY=300, myAngle=0, myHP=100, myKills=0, myDeaths=0;
+let alive=true, respTimer=0, lastShotT=0, camX=0, camY=0;
+
+// Per-player flags for me (updated from Gun)
+let myGod=false, myAuto=false, mySpeed=false, myFrzP=false, myInvis=false;
+
+// Global settings — start clean, never assume frozen
+let G = { frozen:false, chaos:false, godAll:false, bounce:false, speedMult:1, bulletDmg:25 };
+
+let players = {}; // only "live" players (timestamp < 12s old)
+let bullets = [], seenB = new Set();
+let pRef, bRef, sRef, annRef, kfRef;
+let lastAnnT=0, lastKfT=0;
+let isMobile=false;
+const keys={};
+const joy={id:-1,dx:0,dy:0};
+const JR=60;
+let mouseX=0, mouseY=0;
+let aimTouches={};
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+
+// ═══════════════════════════════════════
+//  JOIN — clean start
+// ═══════════════════════════════════════
+window.join = function(){
+  const name = document.getElementById('uinp').value.trim();
+  const room = document.getElementById('rinp').value.trim().toLowerCase().replace(/\s+/g,'-')||'sala1';
+  if(!name||name.length<2){ alert('Nombre mínimo 2 letras'); return; }
+
+  myName=name; myRoom=room;
+  isAdmin = name.toLowerCase()==='admin';
+  myId = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  const col = COLS[Math.floor(Math.random()*COLS.length)];
+  myX = 200 + Math.random()*(AW-400);
+  myY = 200 + Math.random()*(AH-400);
+
+  document.getElementById('ls').style.display='none';
+  document.getElementById('gs').style.display='block';
+  document.getElementById('rn').textContent = room.toUpperCase();
+
+  isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
+  if(isMobile){
+    document.getElementById('mob').style.display='block';
+    document.getElementById('ctrl').style.display='none';
+    setupJoy();
+  } else {
+    window.addEventListener('keydown', e=>{
+      keys[e.code]=true;
+      if(e.code==='Tab'){ e.preventDefault(); showSB(true); }
+      if(e.code==='KeyP' && isAdmin) togAdm();
+    });
+    window.addEventListener('keyup', e=>{
+      keys[e.code]=false;
+      if(e.code==='Tab'){ e.preventDefault(); showSB(false); }
+    });
+    cv.addEventListener('mousemove', e=>{ mouseX=e.clientX; mouseY=e.clientY; });
+    cv.addEventListener('click', e=>shootAt(e.clientX, e.clientY));
+  }
+
+  if(isAdmin){
+    document.getElementById('admbtn').style.display='inline-block';
+    document.getElementById('adm').style.display='block';
+  }
+
+  resizeCv();
+  window.addEventListener('resize', resizeCv);
+
+  // ── Gun refs ──
+  const base = 'rooms/'+myRoom;
+  pRef   = gun.get(base).get('players');
+  bRef   = gun.get(base).get('bullets');
+  sRef   = gun.get(base).get('settings');
+  annRef = gun.get(base).get('announce');
+  kfRef  = gun.get(base).get('killfeed');
+
+  // Write myself — fresh entry with current timestamp
+  const myData = {
+    username:myName, x:myX, y:myY, angle:0,
+    hp:100, kills:0, deaths:0,
+    isAdmin, isGod:false, autoShoot:false, superSpeed:false,
+    frozenP:false, invisible:false,
+    color:col, alive:true, t:Date.now()
+  };
+  pRef.get(myId).put(myData);
+
+  // ── Subscribe players — filter ghosts by timestamp ──
+  pRef.map().on((d,id)=>{
+    if(!d || !id || id==='_') return;
+    // Only accept if timestamp is fresh (within last 12s) OR it's me
+    if(id !== myId && d.t && Date.now()-d.t > 12000) return;
+    players[id] = { ...(players[id]||{}), ...d };
+  });
+
+  // ── Bullets ──
+  bRef.map().on((d,id)=>{
+    if(!d||!id||seenB.has(id)||d.owner===myId) return;
+    seenB.add(id);
+    bullets.push({id,x:d.x,y:d.y,vx:d.vx,vy:d.vy,owner:d.owner,oname:d.oname,
+      dmg:d.dmg||25,dist:0,mine:false,bounces:0});
+  });
+
+  // ── Settings — only accept if a legit setting object ──
+  sRef.get('frozen').on(v   =>{ G.frozen    = !!v;   syncGUI(); });
+  sRef.get('chaos').on(v    =>{ G.chaos     = !!v;   syncGUI(); });
+  sRef.get('godAll').on(v   =>{ G.godAll    = !!v;   syncGUI(); });
+  sRef.get('bounce').on(v   =>{ G.bounce    = !!v;   syncGUI(); });
+  sRef.get('speedMult').on(v=>{ G.speedMult = v||1;  syncGUI(); });
+  sRef.get('bulletDmg').on(v=>{ G.bulletDmg = v||25; syncGUI(); });
+
+  // ── My per-player flags ──
+  pRef.get(myId).get('isGod').on(v      =>{ myGod   = !!v; updStatusBar(); });
+  pRef.get(myId).get('autoShoot').on(v  =>{ myAuto  = !!v; updStatusBar(); });
+  pRef.get(myId).get('superSpeed').on(v =>{ mySpeed = !!v; updStatusBar(); });
+  pRef.get(myId).get('frozenP').on(v    =>{ myFrzP  = !!v; updStatusBar(); });
+  pRef.get(myId).get('invisible').on(v  =>{ myInvis = !!v; updStatusBar(); });
+
+  // ── Announce / killfeed ──
+  annRef.on(d=>{ if(d&&d.t&&d.t>lastAnnT){ lastAnnT=d.t; showAnn(d.msg); } });
+  kfRef.on(d =>{  if(d&&d.t&&d.t>lastKfT&&d.t>Date.now()-8000){ lastKfT=d.t; addKF(d.msg); } });
+
+  // Purge ghost players every 5s
+  setInterval(purgeGhosts, 5000);
+  // Sync position
+  setInterval(sync, 55);
+  // Admin panel refresh
+  setInterval(()=>{ if(isAdmin) updAdm(); }, 350);
+
+  requestAnimationFrame(loop);
+};
+
+// Remove players whose timestamp is stale
+function purgeGhosts(){
+  const now = Date.now();
+  for(const [id, p] of Object.entries(players)){
+    if(id===myId) continue;
+    if(!p || !p.t || now - p.t > 12000){
+      delete players[id];
+    }
+  }
+}
+
+function syncGUI(){
+  document.getElementById('frz-bar').style.display   = G.frozen ? 'block':'none';
+  document.getElementById('chaos-bar').style.display = G.chaos  ? 'block':'none';
+  if(!isAdmin) return;
+  togClass('gFrz',    G.frozen);
+  togClass('gChaos',  G.chaos);
+  togClass('gGodAll', G.godAll);
+  togClass('gBounce', G.bounce);
+  // Speed row
+  const spds=[0.4,1,1.8,3,5];
+  document.querySelectorAll('#spdRow .sopt').forEach((b,i)=>b.classList.toggle('sel',spds[i]===G.speedMult));
+  const dmgs=[5,25,50,100];
+  document.querySelectorAll('#dmgRow .sopt').forEach((b,i)=>b.classList.toggle('sel',dmgs[i]===G.bulletDmg));
+  myAuto = !!(players[myId]?.autoShoot) || G.chaos;
+  updStatusBar();
+}
+function togClass(id,on){ const el=document.getElementById(id); if(el){ el.classList.toggle('on',on); el.classList.toggle('off',!on); } }
+
+// ═══════════════════════════════════════
+//  JOYSTICK
+// ═══════════════════════════════════════
+function setupJoy(){
+  const zone=document.getElementById('joy-zone');
+  const knob=document.getElementById('joy-knob');
+  cv.addEventListener('touchstart', onTS,{passive:false});
+  cv.addEventListener('touchmove',  onTM,{passive:false});
+  cv.addEventListener('touchend',   onTE,{passive:false});
+  zone.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    const t=e.changedTouches[0], r=zone.getBoundingClientRect();
+    joy.id=t.identifier;
+    joy.bx=r.left+r.width/2; joy.by=r.top+r.height/2;
+    joy.dx=0; joy.dy=0;
+  },{passive:false});
+  zone.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      if(t.identifier!==joy.id) continue;
+      let dx=t.clientX-joy.bx, dy=t.clientY-joy.by;
+      const len=Math.hypot(dx,dy);
+      if(len>JR){ dx=dx/len*JR; dy=dy/len*JR; }
+      joy.dx=dx/JR; joy.dy=dy/JR;
+      knob.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+    }
+  },{passive:false});
+  zone.addEventListener('touchend',e=>{
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      if(t.identifier!==joy.id) continue;
+      joy.dx=0; joy.dy=0;
+      knob.style.transform='translate(-50%,-50%)';
+    }
+  },{passive:false});
+}
+function onTS(e){
+  e.preventDefault();
+  for(const t of e.changedTouches){
+    const zr=document.getElementById('joy-zone').getBoundingClientRect();
+    if(t.clientX>=zr.left&&t.clientX<=zr.right&&t.clientY>=zr.top&&t.clientY<=zr.bottom) continue;
+    const fr=document.getElementById('fire-btn').getBoundingClientRect();
+    if(t.clientX>=fr.left&&t.clientX<=fr.right&&t.clientY>=fr.top&&t.clientY<=fr.bottom) continue;
+    aimTouches[t.identifier]={x:t.clientX,y:t.clientY};
+    myAngle=Math.atan2(t.clientY-cv.height/2,t.clientX-cv.width/2);
+  }
+}
+function onTM(e){
+  e.preventDefault();
+  for(const t of e.changedTouches){
+    if(aimTouches[t.identifier]){
+      myAngle=Math.atan2(t.clientY-cv.height/2,t.clientX-cv.width/2);
+    }
+  }
+}
+function onTE(e){ for(const t of e.changedTouches) delete aimTouches[t.identifier]; }
+window.mobileFire=e=>{ e.preventDefault(); shootAt(cv.width/2+Math.cos(myAngle)*200, cv.height/2+Math.sin(myAngle)*200); };
+
+// ═══════════════════════════════════════
+//  GAME LOOP
+// ═══════════════════════════════════════
+let lastT=0;
+function loop(ts){
+  const dt=Math.min((ts-lastT)/1000,0.05); lastT=ts;
+  tick(dt); draw();
+  requestAnimationFrame(loop);
+}
+
+function tick(dt){
+  if(!alive){
+    respTimer-=dt;
+    document.getElementById('dsub').textContent='Reapareciendo en '+Math.max(0,Math.ceil(respTimer))+'s…';
+    if(respTimer<=0) respawn();
+    return;
+  }
+
+  const effGod  = myGod || G.godAll;
+  const effAuto = myAuto || G.chaos;
+
+  // MOVEMENT — only blocked if personally frozen OR global freeze (non-admin)
+  const canMove = !myFrzP && !(G.frozen && !isAdmin);
+  if(canMove){
+    let dx=0, dy=0;
+    if(isMobile){ dx=joy.dx; dy=joy.dy; }
+    else{
+      if(keys['KeyW']||keys['ArrowUp'])    dy-=1;
+      if(keys['KeyS']||keys['ArrowDown'])  dy+=1;
+      if(keys['KeyA']||keys['ArrowLeft'])  dx-=1;
+      if(keys['KeyD']||keys['ArrowRight']) dx+=1;
+      if(dx&&dy){ dx*=.707; dy*=.707; }
+    }
+    const spd = 3.2 * G.speedMult * (mySpeed ? 2 : 1);
+    let nx=myX+dx*spd, ny=myY+dy*spd;
+    nx=cl(nx,PR,AW-PR); ny=cl(ny,PR,AH-PR);
+    for(const w of WALLS){
+      if(crect(nx,ny,PR,w)){
+        if(!crect(myX,ny,PR,w)) nx=myX;
+        else if(!crect(nx,myY,PR,w)) ny=myY;
+        else{ nx=myX; ny=myY; }
+      }
+    }
+    myX=nx; myY=ny;
+  }
+
+  if(!isMobile) myAngle=Math.atan2(mouseY-cv.height/2, mouseX-cv.width/2);
+
+  // Auto-shoot
+  if(effAuto){
+    const cd = BASE_CD * (G.chaos ? 0.45 : 0.8);
+    if(Date.now()-lastShotT > cd)
+      shootAt(cv.width/2+Math.cos(myAngle)*200, cv.height/2+Math.sin(myAngle)*200, true);
+  }
+
+  camX = cl(myX-cv.width/2,  0, Math.max(0,AW-cv.width));
+  camY = cl(myY-cv.height/2, 0, Math.max(0,AH-cv.height));
+
+  // Bullets
+  const bspd = 8.5 * Math.max(0.4, G.speedMult);
+  const rm=[];
+  for(const b of bullets){
+    b.x+=b.vx; b.y+=b.vy; b.dist+=bspd;
+
+    if(G.bounce){
+      if(b.x<BR){b.x=BR;b.vx=Math.abs(b.vx);b.bounces++;}
+      if(b.x>AW-BR){b.x=AW-BR;b.vx=-Math.abs(b.vx);b.bounces++;}
+      if(b.y<BR){b.y=BR;b.vy=Math.abs(b.vy);b.bounces++;}
+      if(b.y>AH-BR){b.y=AH-BR;b.vy=-Math.abs(b.vy);b.bounces++;}
+      if(b.bounces>7){rm.push(b);continue;}
+    } else {
+      if(b.x<0||b.x>AW||b.y<0||b.y>AH){rm.push(b);continue;}
+    }
+    if(b.dist>BRANGE){rm.push(b);continue;}
+
+    let hw=false;
+    for(const w of WALLS){
+      if(b.x>w.x&&b.x<w.x+w.w&&b.y>w.y&&b.y<w.y+w.h){
+        if(G.bounce){
+          const overX=Math.min(b.x-w.x, w.x+w.w-b.x);
+          const overY=Math.min(b.y-w.y, w.y+w.h-b.y);
+          if(overX<overY) b.vx*=-1; else b.vy*=-1;
+          b.bounces++;
+          if(b.bounces>8) hw=true;
+        } else hw=true;
+        break;
+      }
+    }
+    if(hw){rm.push(b);continue;}
+
+    if(!b.mine){
+      if(d2(b.x,b.y,myX,myY)<(PR+BR)**2){
+        rm.push(b);
+        if(!effGod) takeDmg(b.dmg);
+        continue;
+      }
+    } else {
+      let hit=false;
+      for(const[pid,p] of Object.entries(players)){
+        if(pid===myId||!p||!p.alive||p.invisible) continue;
+        if(d2(b.x,b.y,p.x||0,p.y||0)<(PR+BR)**2){ hit=true; hitP(pid,p,b.dmg); rm.push(b); break; }
+      }
+      if(hit) continue;
+    }
+  }
+  for(const b of rm){
+    bullets.splice(bullets.indexOf(b),1);
+    if(b.mine&&b.id) bRef.get(b.id).put(null);
+  }
+}
+
+// ═══════════════════════════════════════
+//  DRAW
+// ═══════════════════════════════════════
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='#020815'; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.save(); ctx.translate(-camX,-camY);
+
+  // Grid
+  ctx.strokeStyle='rgba(0,229,255,0.025)'; ctx.lineWidth=1;
+  for(let x=0;x<AW;x+=64){ ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,AH);ctx.stroke(); }
+  for(let y=0;y<AH;y+=64){ ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(AW,y);ctx.stroke(); }
+
+  // Border glow
+  ctx.shadowBlur=26; ctx.shadowColor='#00e5ff';
+  ctx.strokeStyle='#00e5ff'; ctx.lineWidth=3;
+  ctx.strokeRect(0,0,AW,AH); ctx.shadowBlur=0;
+
+  // Walls
+  for(const w of WALLS){
+    ctx.fillStyle='rgba(0,22,70,0.92)'; ctx.fillRect(w.x,w.y,w.w,w.h);
+    ctx.fillStyle='rgba(0,229,255,0.07)'; ctx.fillRect(w.x,w.y,w.w,4);
+    ctx.strokeStyle='#00e5ff'; ctx.lineWidth=1.5;
+    ctx.shadowBlur=7; ctx.shadowColor='#00e5ff';
+    ctx.strokeRect(w.x,w.y,w.w,w.h); ctx.shadowBlur=0;
+  }
+
+  // Bullets
+  for(const b of bullets){
+    const col=b.mine?'#ffea00':'#ff1744';
+    const r=G.bounce?BR+1.5:BR;
+    ctx.beginPath(); ctx.arc(b.x,b.y,r,0,Math.PI*2);
+    ctx.fillStyle=col; ctx.shadowBlur=G.bounce?30:16; ctx.shadowColor=col; ctx.fill(); ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.moveTo(b.x,b.y); ctx.lineTo(b.x-b.vx*3.5,b.y-b.vy*3.5);
+    ctx.strokeStyle=col+'55'; ctx.lineWidth=3; ctx.stroke();
+  }
+
+  // Build render list: others + me on top
+  const snap = {...players};
+  snap[myId] = {
+    username:myName, x:myX, y:myY, angle:myAngle,
+    hp:myHP, kills:myKills, isAdmin, alive,
+    isGod:myGod||G.godAll, autoShoot:myAuto||G.chaos,
+    superSpeed:mySpeed, frozenP:myFrzP, invisible:myInvis,
+    color: snap[myId]?.color || COLS[0]
+  };
+
+  const renderOrder = Object.entries(snap).sort(([a])=>a===myId?1:-1);
+  for(const [pid,p] of renderOrder){
+    if(!p) continue;
+    const im=pid===myId;
+    const px=im?myX:(p.x||0), py=im?myY:(p.y||0);
+    const pa=im?myAngle:(p.angle||0), col=p.color||'#00ff88';
+
+    if(!p.alive){
+      ctx.globalAlpha=0.15;
+      ctx.beginPath(); ctx.arc(px,py,PR,0,Math.PI*2);
+      ctx.strokeStyle=col; ctx.lineWidth=1; ctx.stroke();
+      ctx.globalAlpha=1; continue;
+    }
+
+    const inv=im?myInvis:p.invisible;
+    ctx.globalAlpha = inv ? (im?0.35:0.08) : 1;
+
+    // Aura rings
+    const effGod2=p.isGod||G.godAll;
+    if(effGod2){
+      ctx.beginPath(); ctx.arc(px,py,PR+6,0,Math.PI*2);
+      ctx.strokeStyle='#ffea00'; ctx.lineWidth=1.5;
+      ctx.shadowBlur=18; ctx.shadowColor='#ffea00'; ctx.stroke(); ctx.shadowBlur=0;
+    }
+    if((p.autoShoot||G.chaos) && Date.now()%600<300){
+      ctx.beginPath(); ctx.arc(px,py,PR+10,0,Math.PI*2);
+      ctx.strokeStyle='rgba(255,145,0,0.4)'; ctx.lineWidth=2; ctx.stroke();
+    }
+    if(p.superSpeed){
+      ctx.beginPath(); ctx.arc(px,py,PR+4,0,Math.PI*2);
+      ctx.strokeStyle='rgba(0,255,136,0.4)'; ctx.lineWidth=2; ctx.stroke();
+    }
+    if(p.frozenP||(!isAdmin&&G.frozen)){
+      ctx.beginPath(); ctx.arc(px,py,PR+3,0,Math.PI*2);
+      ctx.strokeStyle='rgba(0,229,255,0.5)'; ctx.lineWidth=2; ctx.stroke();
+    }
+
+    // Body
+    ctx.beginPath(); ctx.arc(px,py,PR,0,Math.PI*2);
+    ctx.fillStyle=col+(im?'dd':'77');
+    ctx.shadowBlur=im?28:14; ctx.shadowColor=col; ctx.fill();
+    ctx.strokeStyle=col; ctx.lineWidth=im?2.5:1.5; ctx.stroke(); ctx.shadowBlur=0;
+
+    // Aim dot
+    const ax=px+Math.cos(pa)*(PR+9), ay=py+Math.sin(pa)*(PR+9);
+    ctx.beginPath(); ctx.arc(ax,ay,3.5,0,Math.PI*2);
+    ctx.fillStyle=im?'#fff':col;
+    ctx.shadowBlur=6; ctx.shadowColor=col; ctx.fill(); ctx.shadowBlur=0;
+
+    // Name tag
+    ctx.globalAlpha=inv?(im?0.5:0.12):1;
+    ctx.font="bold 11px 'Share Tech Mono'"; ctx.textAlign='center';
+    ctx.fillStyle=im?'#fff':col;
+    let tag=p.username+(p.isAdmin?' ⚡':'');
+    if(p.isGod||G.godAll) tag+=' 🛡';
+    if(p.autoShoot||G.chaos) tag+=' 🔫';
+    if(p.superSpeed) tag+=' ⚡';
+    if(inv) tag+=' 👻';
+    ctx.fillText(tag, px, py-PR-9);
+
+    // HP bar
+    const bw=44,bh=4;
+    ctx.fillStyle='#111'; ctx.fillRect(px-bw/2,py-PR-19,bw,bh);
+    const hp=im?myHP:(p.hp||0);
+    ctx.fillStyle=hp>50?'#00ff88':hp>25?'#ffea00':'#ff1744';
+    ctx.fillRect(px-bw/2,py-PR-19,bw*(cl(hp,0,100)/100),bh);
+    ctx.globalAlpha=1;
+  }
+
+  // Admin minimap
+  if(isAdmin){
+    const mm={x:AW-190,y:AH-140,w:175,h:125,s:0.09};
+    ctx.fillStyle='rgba(0,0,0,0.72)'; ctx.fillRect(mm.x,mm.y,mm.w,mm.h);
+    ctx.strokeStyle='rgba(255,234,0,0.35)'; ctx.lineWidth=1; ctx.strokeRect(mm.x,mm.y,mm.w,mm.h);
+    ctx.font="7px 'Share Tech Mono'"; ctx.fillStyle='rgba(255,234,0,0.4)';
+    ctx.textAlign='left'; ctx.fillText('▸ MINIMAP',mm.x+4,mm.y+9);
+    for(const[,p] of Object.entries(snap)){
+      if(!p||!p.alive) continue;
+      ctx.beginPath(); ctx.arc(mm.x+(p.x||0)*mm.s, mm.y+(p.y||0)*mm.s, 3, 0, Math.PI*2);
+      ctx.fillStyle=p.color||'#0f0'; ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════
+//  SHOOT
+// ═══════════════════════════════════════
+function shootAt(sx,sy,auto=false){
+  if(!alive) return;
+  if(!auto && G.frozen && !isAdmin) return;
+  const cd=BASE_CD*(G.chaos?0.45:1);
+  if(Date.now()-lastShotT<cd) return;
+  lastShotT=Date.now();
+  const a=Math.atan2(sy-cv.height/2, sx-cv.width/2);
+  if(!auto) myAngle=a;
+  const bspd=8.5*Math.max(0.4,G.speedMult);
+  const bx=myX+Math.cos(a)*(PR+13), by=myY+Math.sin(a)*(PR+13);
+  const vx=Math.cos(a)*bspd, vy=Math.sin(a)*bspd;
+  const id='b'+Date.now()+Math.random().toString(36).slice(2,5);
+  seenB.add(id);
+  const dmg=G.bulletDmg;
+  bRef.get(id).put({x:bx,y:by,vx,vy,owner:myId,oname:myName,dmg,t:Date.now(),bounces:0});
+  bullets.push({id,x:bx,y:by,vx,vy,owner:myId,oname:myName,dmg,dist:0,mine:true,bounces:0});
+}
+
+// ═══════════════════════════════════════
+//  DAMAGE
+// ═══════════════════════════════════════
+function takeDmg(amt){
+  if(myGod||G.godAll) return;
+  myHP=Math.max(0,myHP-amt);
+  pRef.get(myId).get('hp').put(myHP);
+  flashRed(); updHB();
+  if(myHP<=0) die();
+}
+function hitP(pid,p,dmg){
+  if(p.isGod||G.godAll) return;
+  const nh=Math.max(0,(p.hp||100)-dmg);
+  pRef.get(pid).get('hp').put(nh);
+  if(nh<=0&&p.alive){
+    myKills++;
+    pRef.get(myId).get('kills').put(myKills);
+    pRef.get(pid).put({...p,alive:false,hp:0,deaths:(p.deaths||0)+1});
+    const msg=myName+' eliminó a '+p.username;
+    kfRef.put({msg,t:Date.now()}); addKF(msg);
+    document.getElementById('myk').textContent='⚔️ '+myKills+' kill'+(myKills!==1?'s':'');
+  }
+}
+function die(){ alive=false; myDeaths++; respTimer=RESPAWN; pRef.get(myId).put({alive:false,hp:0,deaths:myDeaths}); document.getElementById('dead').style.display='flex'; }
+function respawn(){ alive=true; myHP=100; respTimer=0; myX=200+Math.random()*(AW-400); myY=200+Math.random()*(AH-400); pRef.get(myId).put({x:myX,y:myY,hp:100,alive:true}); document.getElementById('dead').style.display='none'; updHB(); }
+function sync(){ if(!myId||!alive) return; pRef.get(myId).put({x:myX,y:myY,angle:myAngle,t:Date.now()}); }
+
+// ═══════════════════════════════════════
+//  ADMIN — per-player
+// ═══════════════════════════════════════
+const togF=(pid,flag)=>{ const p=players[pid]; if(p) pRef.get(pid).get(flag).put(!p[flag]); };
+window.aHeal  = pid=>{ pRef.get(pid).put({hp:100,alive:true}); if(pid===myId){myHP=100;updHB();} };
+window.aKill  = pid=>{ const p=players[pid]; if(p) pRef.get(pid).put({...p,alive:false,hp:0,deaths:(p.deaths||0)+1}); };
+window.aGod   = pid=>togF(pid,'isGod');
+window.aAuto  = pid=>togF(pid,'autoShoot');
+window.aSpeed = pid=>togF(pid,'superSpeed');
+window.aFrzP  = pid=>togF(pid,'frozenP');
+window.aInvis = pid=>togF(pid,'invisible');
+window.aKick  = pid=>{ pRef.get(pid).put(null); delete players[pid]; };
+window.aTele  = pid=>pRef.get(pid).put({x:myX+50,y:myY});
+window.aAdmin = pid=>{ pRef.get(pid).get('isAdmin').put(true); showAnn((players[pid]?.username||'?')+' ahora es ADMIN ⚡'); };
+
+// ═══════════════════════════════════════
+//  ADMIN — global
+// ═══════════════════════════════════════
+const setG=(k,v)=>sRef.get(k).put(v);
+window.doFrz   =()=>setG('frozen',   !G.frozen);
+window.doChaos =()=>setG('chaos',    !G.chaos);
+window.doGodAll=()=>setG('godAll',   !G.godAll);
+window.doBounce=()=>setG('bounce',   !G.bounce);
+window.setSpd  =v =>setG('speedMult', v);
+window.setDmg  =v =>setG('bulletDmg', v);
+window.doKillAll=()=>{ for(const[pid,p] of Object.entries(players)) if(p&&p.alive) pRef.get(pid).put({...p,alive:false,hp:0,deaths:(p.deaths||0)+1}); };
+window.doRespAll=()=>{ for(const[pid] of Object.entries(players)){ const x=200+Math.random()*(AW-400),y=200+Math.random()*(AH-400); pRef.get(pid).put({hp:100,alive:true,x,y}); } };
+window.doTeleAll=()=>{ for(const[pid] of Object.entries(players)){ if(pid===myId)continue; pRef.get(pid).put({x:myX+Math.random()*80-40,y:myY+Math.random()*80-40}); } };
+window.doClear  =()=>{ bRef.put(null); bullets=[]; seenB.clear(); };
+window.doAnn    =()=>{ const m=prompt('📢 Mensaje:'); if(m) annRef.put({msg:m,t:Date.now()}); };
+
+// ═══════════════════════════════════════
+//  ADMIN PANEL RENDER
+// ═══════════════════════════════════════
+function updAdm(){
+  const el=document.getElementById('apl'); if(!el) return;
+  const live = Object.entries(players).filter(([,p])=>p&&p.username&&p.t&&Date.now()-p.t<12000);
+  if(!live.length){ el.innerHTML='<div style="font-size:10px;color:rgba(255,255,255,.3);padding:6px 0">Ningún jugador activo</div>'; return; }
+  live.sort(([,a],[,b])=>(b.kills||0)-(a.kills||0));
+  el.innerHTML = live.map(([pid,p])=>{
+    const im=pid===myId;
+    const god=p.isGod||G.godAll, auto=p.autoShoot||G.chaos;
+    const spd=p.superSpeed, frzp=p.frozenP||G.frozen, inv=p.invisible;
+    return `<div class="pcard">
+      <div class="pcard-head">
+        <span style="color:${p.color||'#0f0'};font-size:13px">●</span>
+        <span class="pcard-name" style="color:${p.color||'#0f0'}">${p.username||'?'}${p.isAdmin?' ⚡':''}</span>
+        <span class="pcard-stats"><span>❤️${p.hp||0}</span><span>⚔️${p.kills||0}</span>${p.alive?'':'<span style="color:#f44">💀</span>'}</span>
+      </div>
+      <div class="pcard-grid">
+        <button class="pb pg"                    onclick="aHeal('${pid}')">+HP</button>
+        <button class="pb pr"                    onclick="aKill('${pid}')">💀 Matar</button>
+        <button class="pb py ${god?'on':'off'}"  onclick="aGod('${pid}')">🛡 God</button>
+        <button class="pb pp ${inv?'on':'off'}"  onclick="aInvis('${pid}')">👻 Invis</button>
+        <button class="pb pr ${auto?'on':'off'}" onclick="aAuto('${pid}')">🔫 Auto</button>
+        <button class="pb pg ${spd?'on':'off'}"  onclick="aSpeed('${pid}')">⚡ Speed</button>
+        <button class="pb pc ${frzp?'on':'off'}" onclick="aFrzP('${pid}')">❄️ Freeze</button>
+        ${!im?`<button class="pb pr" onclick="aKick('${pid}')">❌ Kick</button>`:'<div></div>'}
+        <button class="pb pc" onclick="aTele('${pid}')">📍 Tele</button>
+        ${!im?`<button class="pb py" onclick="aAdmin('${pid}')">👑 Admin</button>`:'<div></div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+window.togAdm=()=>{ const a=document.getElementById('adm'); a.style.display=a.style.display==='none'?'block':'none'; };
+
+// ═══════════════════════════════════════
+//  STATUS BAR
+// ═══════════════════════════════════════
+function updStatusBar(){
+  const bar=document.getElementById('status-bar'); if(!bar) return;
+  bar.innerHTML='';
+  if(myGod||G.godAll)   bar.innerHTML+='<span class="sbadge bg-god">🛡 DIOS</span>';
+  if(myAuto||G.chaos)   bar.innerHTML+='<span class="sbadge bg-auto">🔫 AUTO</span>';
+  if(mySpeed)           bar.innerHTML+='<span class="sbadge bg-speed">⚡ VELOZ</span>';
+  if(myInvis)           bar.innerHTML+='<span class="sbadge bg-invis">👻 INVISIBLE</span>';
+  if(myFrzP)            bar.innerHTML+='<span class="sbadge bg-frz">❄️ CONGELADO</span>';
+  if(G.chaos)           bar.innerHTML+='<span class="sbadge bg-chaos">🔥 CAOS</span>';
+  if(G.bounce)          bar.innerHTML+='<span class="sbadge bg-bounce">🔵 REBOTE</span>';
+}
+
+// ═══════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════
+function updHB(){
+  const b=document.getElementById('hb'),t=document.getElementById('ht');
+  b.style.width=myHP+'%';
+  b.style.background=myHP>50?'#00ff88':myHP>25?'#ffea00':'#ff1744';
+  t.textContent=myHP;
+}
+window.showSB=function(s){
+  const el=document.getElementById('sb'); el.style.display=s?'flex':'none';
+  if(!s) return;
+  const me={username:myName,kills:myKills,deaths:myDeaths,hp:myHP,alive,color:players[myId]?.color||'#0f0',isAdmin,isGod:myGod,autoShoot:myAuto,superSpeed:mySpeed,invisible:myInvis};
+  const all=Object.entries({...players,[myId]:me}).filter(([,p])=>p&&p.username&&(p.t?Date.now()-p.t<12000:true)).sort(([,a],[,b])=>(b.kills||0)-(a.kills||0));
+  document.getElementById('sbb').innerHTML=all.map(([,p])=>`<tr style="color:${p.color||'#0f0'}">
+    <td>${p.username||'?'}${p.isAdmin?' ⚡':''}</td>
+    <td>${p.kills||0}</td><td>${p.deaths||0}</td>
+    <td style="color:${(p.hp||0)>50?'#00ff88':(p.hp||0)>25?'#ffea00':'#ff1744'}">${p.alive?(p.hp||0):'💀'}</td>
+    <td style="font-size:9px">${[(p.isGod||G.godAll)?'🛡':'',(p.autoShoot||G.chaos)?'🔫':'',p.superSpeed?'⚡':'',p.invisible?'👻':'',p.frozenP?'❄️':''].filter(Boolean).join('')||'—'}</td>
+  </tr>`).join('');
+};
+function addKF(msg){ const kf=document.getElementById('kf'); const d=document.createElement('div'); d.className='km'; d.textContent=msg; kf.prepend(d); setTimeout(()=>d.remove(),4300); }
+function showAnn(msg){ const d=document.createElement('div'); d.className='ann'; d.textContent='📢 '+msg; document.body.appendChild(d); setTimeout(()=>d.remove(),5500); }
+let ft;
+function flashRed(){ cv.style.filter='brightness(2.2) saturate(4) hue-rotate(290deg)'; clearTimeout(ft); ft=setTimeout(()=>cv.style.filter='',80); }
+function resizeCv(){ cv.width=window.innerWidth; cv.height=window.innerHeight; }
+function d2(x1,y1,x2,y2){ return (x2-x1)**2+(y2-y1)**2; }
+function cl(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function crect(cx,cy,cr,r){ const nx=cl(cx,r.x,r.x+r.w),ny=cl(cy,r.y,r.y+r.h); return d2(cx,cy,nx,ny)<cr*cr; }
+</script>
+</body>
+</html>
