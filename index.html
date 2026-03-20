@@ -235,8 +235,9 @@ window.join = function(){
   isAdmin = name.toLowerCase()==='admin';
   myId = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
   const col = COLS[Math.floor(Math.random()*COLS.length)];
-  myX = 200 + Math.random()*(AW-400);
-  myY = 200 + Math.random()*(AH-400);
+  // Spawn near center with small random offset
+  myX = AW/2 + (Math.random()-0.5)*300;
+  myY = AH/2 + (Math.random()-0.5)*300;
 
   document.getElementById('ls').style.display='none';
   document.getElementById('gs').style.display='block';
@@ -291,7 +292,7 @@ window.join = function(){
   pRef.map().on((d,id)=>{
     if(!d || !id || id==='_') return;
     // Only accept if timestamp is fresh (within last 12s) OR it's me
-    if(id !== myId && d.t && Date.now()-d.t > 12000) return;
+    if(id !== myId && d.t && Date.now()-d.t > 30000) return;
     players[id] = { ...(players[id]||{}), ...d };
   });
 
@@ -337,7 +338,7 @@ function purgeGhosts(){
   const now = Date.now();
   for(const [id, p] of Object.entries(players)){
     if(id===myId) continue;
-    if(!p || !p.t || now - p.t > 12000){
+    if(!p || !p.t || now - p.t > 30000){
       delete players[id];
     }
   }
@@ -646,20 +647,63 @@ function draw(){
     ctx.globalAlpha=1;
   }
 
-  // Admin minimap
+  // Admin minimap (still in world-space transform)
   if(isAdmin){
-    const mm={x:AW-190,y:AH-140,w:175,h:125,s:0.09};
-    ctx.fillStyle='rgba(0,0,0,0.72)'; ctx.fillRect(mm.x,mm.y,mm.w,mm.h);
-    ctx.strokeStyle='rgba(255,234,0,0.35)'; ctx.lineWidth=1; ctx.strokeRect(mm.x,mm.y,mm.w,mm.h);
+    const mmW=170, mmH=120, mmX=AW-mmW-10, mmY=AH-mmH-10, s=mmW/AW;
+    ctx.fillStyle='rgba(0,0,0,0.75)'; ctx.fillRect(mmX,mmY,mmW,mmH);
+    ctx.strokeStyle='rgba(255,234,0,0.35)'; ctx.lineWidth=1; ctx.strokeRect(mmX,mmY,mmW,mmH);
     ctx.font="7px 'Share Tech Mono'"; ctx.fillStyle='rgba(255,234,0,0.4)';
-    ctx.textAlign='left'; ctx.fillText('▸ MINIMAP',mm.x+4,mm.y+9);
+    ctx.textAlign='left'; ctx.fillText('▸ MINIMAP',mmX+4,mmY+9);
     for(const[,p] of Object.entries(snap)){
       if(!p||!p.alive) continue;
-      ctx.beginPath(); ctx.arc(mm.x+(p.x||0)*mm.s, mm.y+(p.y||0)*mm.s, 3, 0, Math.PI*2);
+      ctx.beginPath(); ctx.arc(mmX+(p.x||0)*s, mmY+(p.y||0)*(mmH/AH), 3, 0, Math.PI*2);
       ctx.fillStyle=p.color||'#0f0'; ctx.fill();
     }
   }
+
+  // Done with world transform
   ctx.restore();
+
+  // ── Off-screen arrows (screen-space, no transform) ──
+  const pad=42, AL=13;
+  for(const[pid,p] of Object.entries(snap)){
+    if(pid===myId||!p||!p.alive||!p.username) continue;
+    const sx=(p.x||0)-camX, sy=(p.y||0)-camY;
+    // Already on screen? skip
+    if(sx>PR+10&&sx<cv.width-PR-10&&sy>PR+10&&sy<cv.height-PR-10) continue;
+    const cx2=cv.width/2, cy2=cv.height/2;
+    const ang=Math.atan2(sy-cy2, sx-cx2);
+    // Clamp arrow tip to screen edge
+    const ex=cl(cx2+Math.cos(ang)*9999, pad, cv.width-pad);
+    const ey=cl(cy2+Math.sin(ang)*9999, pad, cv.height-pad);
+    const col=p.color||'#00ff88';
+    ctx.save();
+    ctx.translate(ex,ey);
+    // Background pill
+    ctx.fillStyle='rgba(0,0,0,0.55)';
+    ctx.beginPath(); ctx.arc(0,0,AL+4,0,Math.PI*2); ctx.fill();
+    // Arrow
+    ctx.rotate(ang);
+    ctx.shadowBlur=14; ctx.shadowColor=col;
+    ctx.fillStyle=col;
+    ctx.beginPath();
+    ctx.moveTo(AL+4,0);
+    ctx.lineTo(-AL*.5,-AL*.5);
+    ctx.lineTo(-AL*.5, AL*.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.rotate(-ang);
+    // Name + distance
+    ctx.font="bold 9px 'Share Tech Mono'";
+    ctx.textAlign='center';
+    ctx.fillStyle=col;
+    const dist=Math.round(Math.hypot((p.x||0)-myX,(p.y||0)-myY));
+    ctx.fillText(p.username, 0, -AL-8);
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.fillText(dist+'u', 0, -AL+2);
+    ctx.restore();
+  }
 }
 
 // ═══════════════════════════════════════
@@ -707,7 +751,7 @@ function hitP(pid,p,dmg){
   }
 }
 function die(){ alive=false; myDeaths++; respTimer=RESPAWN; pRef.get(myId).put({alive:false,hp:0,deaths:myDeaths}); document.getElementById('dead').style.display='flex'; }
-function respawn(){ alive=true; myHP=100; respTimer=0; myX=200+Math.random()*(AW-400); myY=200+Math.random()*(AH-400); pRef.get(myId).put({x:myX,y:myY,hp:100,alive:true}); document.getElementById('dead').style.display='none'; updHB(); }
+function respawn(){ alive=true; myHP=100; respTimer=0; myX=AW/2+(Math.random()-.5)*300; myY=AH/2+(Math.random()-.5)*300; pRef.get(myId).put({x:myX,y:myY,hp:100,alive:true}); document.getElementById('dead').style.display='none'; updHB(); }
 function sync(){ if(!myId||!alive) return; pRef.get(myId).put({x:myX,y:myY,angle:myAngle,t:Date.now()}); }
 
 // ═══════════════════════════════════════
@@ -746,7 +790,7 @@ window.doAnn    =()=>{ const m=prompt('📢 Mensaje:'); if(m) annRef.put({msg:m,
 // ═══════════════════════════════════════
 function updAdm(){
   const el=document.getElementById('apl'); if(!el) return;
-  const live = Object.entries(players).filter(([,p])=>p&&p.username&&p.t&&Date.now()-p.t<12000);
+  const live = Object.entries(players).filter(([,p])=>p&&p.username&&p.t&&Date.now()-p.t<30000);
   if(!live.length){ el.innerHTML='<div style="font-size:10px;color:rgba(255,255,255,.3);padding:6px 0">Ningún jugador activo</div>'; return; }
   live.sort(([,a],[,b])=>(b.kills||0)-(a.kills||0));
   el.innerHTML = live.map(([pid,p])=>{
